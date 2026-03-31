@@ -1,0 +1,71 @@
+services:
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    restart: always
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: docs_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - redis
+      - postgres
+    restart: always
+    command: >
+      sh -c "
+      echo '⏳ Waiting for PostgreSQL...';
+      until nc -z postgres 5432;
+      do sleep 2; done;
+
+      echo '⏳ Waiting for Redis...';
+      until nc -z redis 6379;
+      do sleep 2; done;
+
+      echo '🚀 Starting FastAPI...';
+      uvicorn app.main:app --host 0.0.0.0 --port 8000
+      "
+
+  worker:
+    build: ./backend
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - redis
+      - postgres
+    restart: always
+    command: >
+      sh -c "
+      echo '⏳ Waiting for PostgreSQL...';
+      until nc -z postgres 5432;
+      do sleep 2; done;
+
+      echo '⏳ Waiting for Redis...';
+      until nc -z redis 6379;
+      do sleep 2; done;
+
+      echo '⏳ Waiting for Backend...';
+      until nc -z backend 8000;
+      do sleep 2; done;
+
+      echo '🚀 Starting Celery Worker...';
+      celery -A app.worker.celery worker --loglevel=info
+      "
+
+volumes:
+  postgres_data:
