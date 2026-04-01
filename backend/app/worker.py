@@ -3,18 +3,23 @@ from app.db import SessionLocal
 from app.models import Document
 import time
 import requests
+import os
+
+# 🔥 Environment Configuration for Railway
+REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379/0")
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 
 celery = Celery(
     "worker",
-    broker="redis://redis:6379/0"
+    broker=REDIS_URL
 )
 
-print("[CELERY] ✅ Celery worker initialized with broker: redis://redis:6379/0")
+print(f"[CELERY] ✅ Celery worker initialized with broker: {REDIS_URL}")
 
 def send_update(doc_id: int, status: str):
     try:
         res = requests.post(
-            "http://backend:8000/notify",
+            f"{BACKEND_URL}/notify",
             json={"id": doc_id, "status": status},
             timeout=2
         )

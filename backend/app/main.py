@@ -8,6 +8,11 @@ from app.db import Base, engine, SessionLocal
 from app.models import Document
 from app.worker import process_document
 
+# 🔥 Environment Configuration for Railway
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
+RAILWAY_DOMAIN = os.getenv("RAILWAY_DOMAIN", "http://localhost:8000")
+BACKEND_URL = os.getenv("BACKEND_URL", RAILWAY_DOMAIN)
+
 # 🔥 App init
 app = FastAPI()
 
@@ -128,19 +133,20 @@ async def upload_file(file: UploadFile = File(...)):
         print(f"📊 [BACKEND] Document created in DB with id={doc.id}, status={doc.status}")
 
         print(f"🔄 [BACKEND] Queuing Celery task for doc {doc.id}")
-       # Direct processing (temporary fix)
-        process_document(doc.id)
+        # Queue the task asynchronously using Celery
+        task = process_document.delay(doc.id)
         print(f"✅ [BACKEND] Celery task queued with task_id={task.id} for doc {doc.id}\n")
 
         return {
             "id": doc.id,
             "filename": file.filename,
-            "file_url": f"http://localhost:8000/uploads/{file.filename}",
+            "file_url": f"{BACKEND_URL}/uploads/{file.filename}",
             "status": "queued",
             "task_id": str(task.id)
         }
     except Exception as e:
         print(f"❌ [BACKEND] Upload error: {e}")
+        db.rollback()
         raise
     finally:
         db.close()
