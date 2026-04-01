@@ -3,11 +3,11 @@
 import { useEffect, useState, useCallback } from "react";
 import toast, { Toaster } from "react-hot-toast";
 
-//  ONLY CHANGE in Railway backend
-const API_BASE_URL = "https://doc-processing-system-production.up.railway.app";
-const WS_URL = "wss://doc-processing-system-production.up.railway.app";
+// 🔥 API Configuration - Uses environment variables
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000";
 
-//  STATUS 
+// 🔥 STATUS Configuration
 const STATUS_CONFIG = {
   queued: { percentage: 20, message: "Waiting in queue ⏳", color: "bg-blue-500" },
   parsing: { percentage: 50, message: "Reading file 📄", color: "bg-orange-500" },
