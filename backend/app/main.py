@@ -73,14 +73,18 @@ app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 Base.metadata.create_all(bind=engine)
 
 # 🔥 CORS
+origins = [
+    "http://localhost:3000",
+    "https://doc-processing-system.vercel.app",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 # 🔥 APIs
 @app.get("/documents")
 def get_documents():
