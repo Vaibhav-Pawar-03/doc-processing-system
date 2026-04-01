@@ -11,6 +11,10 @@ from app.worker import process_document
 # 🔥 App init
 app = FastAPI()
 
+@app.get("/")
+async def health():
+    return {"status": "ok"}
+    
 # 🔥 WebSocket manager (FIXED)
 class ConnectionManager:
     def __init__(self):
