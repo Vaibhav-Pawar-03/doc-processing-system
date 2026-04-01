@@ -128,7 +128,8 @@ async def upload_file(file: UploadFile = File(...)):
         print(f"📊 [BACKEND] Document created in DB with id={doc.id}, status={doc.status}")
 
         print(f"🔄 [BACKEND] Queuing Celery task for doc {doc.id}")
-        task = process_document.delay(doc.id)
+       # Direct processing (temporary fix)
+        process_document(doc.id)
         print(f"✅ [BACKEND] Celery task queued with task_id={task.id} for doc {doc.id}\n")
 
         return {
