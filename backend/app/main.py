@@ -75,7 +75,7 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # 🔥 Security config
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
-ALLOWED_TYPES = ["pdf", "docx"]
+ALLOWED_TYPES = ["pdf", "docx", "txt"]
 
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
@@ -151,14 +151,10 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
 
         base_url = str(request.base_url).rstrip("/")
         return {
-            "success": True,
-            "data": {
-                "id": doc.id,
-                "filename": file.filename,
-                "file_url": f"{base_url}/uploads/{file.filename}",
-                "status": "completed"
-            },
-            "message": "File uploaded and processed successfully"
+            "id": doc.id,
+            "filename": file.filename,
+            "file_url": f"{base_url}/uploads/{file.filename}",
+            "status": "completed"
         }
     except Exception as e:
         print(f"❌ [BACKEND] Upload error: {e}")

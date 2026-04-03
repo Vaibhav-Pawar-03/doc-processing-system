@@ -34,21 +34,21 @@ def process_document(doc_id: int):
         doc.status = "parsing"
         db.commit()
         print(f"[WORKER] ✏️ Database updated: status → 'parsing'")
-        send_update(doc.id, "parsing")
+        # Removed send_update for sync processing
         time.sleep(2)
 
         # Change to extracting
         doc.status = "extracting"
         db.commit()
         print(f"[WORKER] ✏️ Database updated: status → 'extracting'")
-        send_update(doc.id, "extracting")
+        # Removed send_update
         time.sleep(2)
 
         # Change to completed
         doc.status = "completed"
         db.commit()
         print(f"[WORKER] ✏️ Database updated: status → 'completed'")
-        send_update(doc.id, "completed")
+        # Removed send_update
 
         print(f"[WORKER] ✅ PROCESSING COMPLETED: document {doc_id} processing finished\n")
 
