@@ -116,7 +116,7 @@ def get_status(doc_id: int):
 
 # 🔥 Upload
 @app.post("/upload")
-async def upload_file(file: UploadFile = File(...)):
+async def upload_file(request: Request, file: UploadFile = File(...)):
     db = SessionLocal()
     print(f"\n📥 [BACKEND] Upload request for file: {file.filename}")
     try:
@@ -132,17 +132,18 @@ async def upload_file(file: UploadFile = File(...)):
         db.refresh(doc)
         print(f"📊 [BACKEND] Document created in DB with id={doc.id}, status={doc.status}")
 
-        print(f"🔄 [BACKEND] Queuing Celery task for doc {doc.id}")
-        # Queue the task asynchronously using Celery
-        task = process_document.delay(doc.id)
-        print(f"✅ [BACKEND] Celery task queued with task_id={task.id} for doc {doc.id}\n")
+        print(f"🔄 [BACKEND] Processing document synchronously for doc {doc.id}")
+        # Process synchronously
+        process_document(doc.id)
+        print(f"✅ [BACKEND] Document processed synchronously for doc {doc.id}\n")
 
+        base_url = str(request.base_url).rstrip("/")
         return {
             "id": doc.id,
             "filename": file.filename,
-            "file_url": f"{BACKEND_URL}/uploads/{file.filename}",
-            "status": "queued",
-            "task_id": str(task.id)
+            "file_url": f"{base_url}/uploads/{file.filename}",
+            "status": "completed",  # Since synchronous, it's completed
+            "task_id": None  # No task ID for sync
         }
     except Exception as e:
         print(f"❌ [BACKEND] Upload error: {e}")
