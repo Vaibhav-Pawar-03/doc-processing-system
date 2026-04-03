@@ -1,6 +1,6 @@
 import os
 import asyncio
-from fastapi import FastAPI, UploadFile, File, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, UploadFile, File, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi import Request
@@ -73,6 +73,10 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+# 🔥 Security config
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+ALLOWED_TYPES = ["pdf", "docx"]
+
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 Base.metadata.create_all(bind=engine)
@@ -117,6 +121,14 @@ def get_status(doc_id: int):
 # 🔥 Upload
 @app.post("/upload")
 async def upload_file(request: Request, file: UploadFile = File(...)):
+    # 🔥 Security checks
+    if file.size and file.size > MAX_FILE_SIZE:
+        raise HTTPException(status_code=413, detail="File too large. Max 5MB allowed.")
+    
+    file_ext = file.filename.split('.')[-1].lower()
+    if file_ext not in ALLOWED_TYPES:
+        raise HTTPException(status_code=400, detail="Only PDF and DOCX files allowed.")
+    
     db = SessionLocal()
     print(f"\n📥 [BACKEND] Upload request for file: {file.filename}")
     try:
@@ -139,11 +151,14 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
 
         base_url = str(request.base_url).rstrip("/")
         return {
-            "id": doc.id,
-            "filename": file.filename,
-            "file_url": f"{base_url}/uploads/{file.filename}",
-            "status": "completed",  # Since synchronous, it's completed
-            "task_id": None  # No task ID for sync
+            "success": True,
+            "data": {
+                "id": doc.id,
+                "filename": file.filename,
+                "file_url": f"{base_url}/uploads/{file.filename}",
+                "status": "completed"
+            },
+            "message": "File uploaded and processed successfully"
         }
     except Exception as e:
         print(f"❌ [BACKEND] Upload error: {e}")
