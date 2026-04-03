@@ -85,6 +85,7 @@ Base.metadata.create_all(bind=engine)
 origins = [
     "http://localhost:3000",
     "https://doc-processing-system.vercel.app",
+    "https://doc-processing-system-production.up.railway.app",  # Add Railway URL for direct access
 ]
 
 app.add_middleware(
