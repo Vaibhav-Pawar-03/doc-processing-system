@@ -4,6 +4,7 @@ from fastapi import FastAPI, UploadFile, File, WebSocket, WebSocketDisconnect, H
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi import Request
+from sqlalchemy import text
 from app.db import Base, engine, SessionLocal
 from app.models import Document
 from app.worker import process_document
@@ -81,6 +82,12 @@ app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 Base.metadata.create_all(bind=engine)
 
+# Ensure migration compatibility for the timestamps columns
+with engine.connect() as connection:
+    connection.execute(text("ALTER TABLE documents ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT now()"))
+    connection.execute(text("ALTER TABLE documents ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()"))
+    connection.commit()
+
 # 🔥 CORS
 origins = [
     "http://localhost:3000",
@@ -90,7 +97,7 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],  # allow any origin for easier deployment/testing until production domain is stable
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

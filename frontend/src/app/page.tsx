@@ -4,8 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import toast, { Toaster } from "react-hot-toast";
 
 // 🔥 API Configuration - Uses environment variables
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://doc-processing-system-production.up.railway.app";
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || "wss://doc-processing-system-production.up.railway.app";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000";
 
 // 🔥 STATUS Configuration
 const STATUS_CONFIG = {
@@ -24,6 +24,7 @@ export default function Home() {
   const [wsConnected, setWsConnected] = useState(false);
   const [wsRef, setWsRef] = useState<WebSocket | null>(null);
   const [currentDocId, setCurrentDocId] = useState<number | null>(null);
+  const [serverStatus, setServerStatus] = useState<'online' | 'offline' | 'unknown'>('unknown');
 
   const getStatusInfo = useCallback((stat: string) => {
     return (
@@ -37,6 +38,17 @@ export default function Home() {
 
   //  ONLY CHANGE in WebSocket URL
   useEffect(() => {
+    const checkBackend = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/`);
+        setServerStatus(res.ok ? 'online' : 'offline');
+      } catch (err) {
+        setServerStatus('offline');
+      }
+    };
+
+    checkBackend();
+
     let reconnectAttempts = 0;
     const maxReconnectAttempts = 5;
     let reconnectTimeout: NodeJS.Timeout;
@@ -98,6 +110,11 @@ export default function Home() {
           body: formData,
         });
 
+        if (!res.ok) {
+          const errorData = await res.text();
+          throw new Error(`Upload failed (${res.status}): ${errorData}`);
+        }
+
         const data = await res.json();
 
         setCurrentDocId(data.id);
@@ -141,6 +158,9 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black px-4">
       <Toaster />
+      <div className="absolute top-6 left-6 px-4 py-2 rounded-lg bg-gray-900 border border-gray-700 text-sm">
+        Backend: <span className={serverStatus === 'online' ? 'text-green-400' : 'text-red-400'}>{serverStatus}</span>
+      </div>
 
       {/* SAME UI */}
       <div className="absolute top-6 right-6 flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-900 border border-gray-700">
