@@ -4,8 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import toast, { Toaster } from "react-hot-toast";
 
 // 🔥 API Configuration - Uses environment variables
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000";
+const API_BASE_URL = "https://doc-processing-system-production.up.railway.app";
+const WS_URL = "wss://doc-processing-system-production.up.railway.app";
 
 // 🔥 STATUS Configuration
 const STATUS_CONFIG = {
